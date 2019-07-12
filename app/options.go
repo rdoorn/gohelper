@@ -25,7 +25,7 @@ func WithProfiling(p profiling.Interface) Option {
 func Webserver(c WebserverConfig) Option {
 	return func(o *App) {
 		if o.webserver == nil {
-			o.webserver = NewWebserverHandler(c)
+			o.webserver = NewWebserverHandler(o.logger, c)
 		}
 	}
 }

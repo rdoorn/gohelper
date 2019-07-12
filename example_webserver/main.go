@@ -16,11 +16,10 @@ type MyApp struct {
 type MyAppConfig struct {
 	app.App
 	Webserver app.WebserverConfig
-	//Profiling profiling.Config
 }
 
 func main() {
-	router := gin.Default()
+	router := gin.New()
 
 	handler := &MyApp{}
 	handler.New(
@@ -37,28 +36,17 @@ func main() {
 	// all requests require authentication using certificates
 	//router.Use(handler.AuthClientCertificate)
 	// Simple group: v1
+	router.Use(gin.Recovery(), handler.GinLogger())
 	v1 := router.Group("/v1")
 	{
 		v1.POST("/version", handler.version)
+		v1.GET("/hello/:name", handler.hello)
 	}
-
-	/*app.Signal(func() {
-		app.Stop()
-	}, os.Interrupt, syscall.SIGTERM)
-
-	app.Signal(func() {
-		app.Reload()
-	}, syscall.SIGHUP)
-	*/
 
 	if err := handler.Start(); err != nil {
 		handler.Panicf("failed to start server: %s", err)
 	}
 
-}
-
-func (m *MyApp) stop() {
-	m.Stop()
 }
 
 /*
@@ -68,4 +56,10 @@ func (m *MyApp) reload() {
 */
 
 func (m *MyApp) version(c *gin.Context) {
+	//m.Infof("hello verion request")
+}
+
+func (m *MyApp) hello(c *gin.Context) {
+	c.JSON(200, gin.H{"name": c.Param("name")})
+	//m.Infof("hello %s", c.Param("name"))
 }

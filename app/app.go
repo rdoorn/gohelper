@@ -14,28 +14,27 @@ type WebserverInterface interface {
 }
 
 type App struct {
+	Name      string
 	logger    logging.SimpleLogger
 	profiler  profiling.Interface
 	webserver *WebserverHandler
 	signals   *signaling.Handler
 }
 
-func (app App) New(opts ...Option) *App {
+func (app *App) New(opts ...Option) error {
 	logger, _ := logging.NewZap("stdout")
 
-	app = App{
-		logger: logger,
-	}
+	app.logger = logger
 
 	if addr, ok := os.LookupEnv("PROFILING"); ok {
 		app.profiler = profiling.Default(addr)
 	}
 
 	for _, o := range opts {
-		o(&app)
+		o(app)
 	}
 
-	return &app
+	return nil
 }
 
 func (a *App) Println(v ...interface{}) {
@@ -67,8 +66,18 @@ func (a *App) Panicf(v ...interface{}) {
 }
 
 func (a *App) Start() error {
+	a.logger.Infof("application starting")
 	if a.webserver != nil {
-		a.webserver.Start()
+		if err := a.webserver.Start(); err != nil {
+			return err
+		}
 	}
 	return nil
+}
+
+func (a *App) Stop() {
+	a.logger.Infof("application stopping")
+	if a.webserver != nil {
+		a.webserver.Stop()
+	}
 }

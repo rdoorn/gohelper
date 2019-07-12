@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/rdoorn/gohelper/logging"
 )
 
 type WebserverConfig struct {
@@ -16,13 +19,15 @@ type WebserverConfig struct {
 }
 
 type WebserverHandler struct {
+	logging    logging.SimpleLogger
 	config     *WebserverConfig
 	server     http.Server
 	serverDone chan struct{}
 }
 
-func NewWebserverHandler(c WebserverConfig) *WebserverHandler {
+func NewWebserverHandler(logger logging.SimpleLogger, c WebserverConfig) *WebserverHandler {
 	return &WebserverHandler{
+		logging:    logger, // inherrit logger
 		config:     &c,
 		serverDone: make(chan struct{}),
 	}
@@ -40,6 +45,7 @@ func (w *WebserverHandler) Start() error {
 		TLSConfig: w.config.TLSConfig,
 	}
 
+	w.logging.Infof("Webservice listening", "addr", listenAddr)
 	if err := w.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return err
 	}
@@ -57,12 +63,43 @@ func (w *WebserverHandler) Stop() error {
 		w.logging.Fatalf("Could not gracefully shutdown the server: %v\n", err)
 	}
 	close(w.serverDone)
+	w.logging.Infof("Webservice shutdown")
 
 	return nil
 }
 
 func (w *WebserverHandler) Reload() error {
 	return nil
+}
+
+func (a *App) GinLogger() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Start timer
+		start := time.Now()
+		path := c.Request.URL.Path
+		raw := c.Request.URL.RawQuery
+
+		// Process request
+		c.Next()
+
+		end := time.Now()
+		if raw != "" {
+			path = path + "?" + raw
+		}
+
+		a.Infof(
+			//path,
+			c.Request.Host,
+			"client", c.ClientIP(),
+			"method", c.Request.Method,
+			"path", path,
+			"status", c.Writer.Status(),
+			"latency", end.Sub(start),
+			"size", c.Writer.Size(),
+			"error", c.Errors.ByType(gin.ErrorTypePrivate).String(),
+		)
+
+	}
 }
 
 /*

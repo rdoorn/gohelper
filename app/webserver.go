@@ -5,11 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
-
-	"github.com/rdoorn/gohelper/logging"
-	"github.com/rdoorn/gohelper/signaling"
 )
 
 type WebserverConfig struct {
@@ -19,41 +15,39 @@ type WebserverConfig struct {
 	TLSConfig *tls.Config
 }
 
-type Webserver struct {
-	App
-	Config     *WebserverConfig
+type WebserverHandler struct {
+	config     *WebserverConfig
 	server     http.Server
 	serverDone chan struct{}
-	signal     *signaling.Handler
 }
 
-func (w *Webserver) Start() error {
-	if w.logging == nil {
-		panic("webserver not initialized")
+func NewWebserverHandler(c WebserverConfig) *WebserverHandler {
+	return &WebserverHandler{
+		config:     &c,
+		serverDone: make(chan struct{}),
 	}
-	w.logging.Println("Server starting")
+}
+
+func (w *WebserverHandler) Start() error {
 	// router.POST("/opvragen/naw", handler.ClientRequest)
 	// router.POST("/1bnr", handler.IbanRequest)
 
-	listenAddr := fmt.Sprintf("%s:%d", w.Config.IP, w.Config.Port)
+	listenAddr := fmt.Sprintf("%s:%d", w.config.IP, w.config.Port)
 	// start https server
 	w.server = http.Server{
 		Addr:      listenAddr,
-		Handler:   w.Config.Handler,
-		TLSConfig: w.Config.TLSConfig,
+		Handler:   w.config.Handler,
+		TLSConfig: w.config.TLSConfig,
 	}
 
-	w.logging.Println("Server is ready to handle requests", "addr", listenAddr)
 	if err := w.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		w.logging.Fatalf("Could not start listener", "addr", listenAddr, "error", err)
 		return err
 	}
 	<-w.serverDone
 	return nil
 }
 
-func (w *Webserver) Stop() error {
-	w.logging.Println("Server is shutting down...")
+func (w *WebserverHandler) Stop() error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -63,27 +57,22 @@ func (w *Webserver) Stop() error {
 		w.logging.Fatalf("Could not gracefully shutdown the server: %v\n", err)
 	}
 	close(w.serverDone)
-	w.signal.Close()
 
 	return nil
 }
 
-func (w *Webserver) Init() (err error) {
-	w.serverDone = make(chan struct{})
-	w.logging, err = logging.NewZap("stdout")
-	w.signal = signaling.New()
-	return
-}
-
-func (w *Webserver) Reload() error {
+func (w *WebserverHandler) Reload() error {
 	return nil
 }
 
-func (w *Webserver) LoadWebserverConfig(config WebserverConfig) error {
+/*
+func (w *WebserverHandler) LoadWebserverConfig(config WebserverConfig) error {
 	w.Config = &config
 	return nil
 }
-
-func (w *Webserver) Signal(f func(), sig ...os.Signal) {
+*/
+/*
+func (w *WebserverHandler) Signal(f func(), sig ...os.Signal) {
 	w.signal.Add(f, sig...)
 }
+*/

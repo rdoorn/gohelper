@@ -1,51 +1,74 @@
 package app
 
 import (
+	"os"
+
 	"github.com/rdoorn/gohelper/logging"
+	"github.com/rdoorn/gohelper/profiling"
+	"github.com/rdoorn/gohelper/signaling"
 )
 
-type AppInterface interface {
-	Configure() error
-	Reload() error
-	Stop() error
+type WebserverInterface interface {
 	Start() error
-
-	logging.SimpleLogger
-}
-
-func New(i AppInterface) (AppInterface, error) {
-	err := i.Configure()
-	return i, err
+	Stop() error
 }
 
 type App struct {
-	logging logging.SimpleLogger
+	logger    logging.SimpleLogger
+	profiler  profiling.Interface
+	webserver *WebserverHandler
+	signals   *signaling.Handler
+}
+
+func (app App) New(opts ...Option) *App {
+	logger, _ := logging.NewZap("stdout")
+
+	app = App{
+		logger: logger,
+	}
+
+	if addr, ok := os.LookupEnv("PROFILING"); ok {
+		app.profiler = profiling.Default(addr)
+	}
+
+	for _, o := range opts {
+		o(&app)
+	}
+
+	return &app
 }
 
 func (a *App) Println(v ...interface{}) {
-	a.logging.Println(v...)
+	a.logger.Println(v...)
 }
 
 func (a *App) Debugf(v ...interface{}) {
-	a.logging.Debugf(v...)
+	a.logger.Debugf(v...)
 }
 
 func (a *App) Infof(v ...interface{}) {
-	a.logging.Infof(v...)
+	a.logger.Infof(v...)
 }
 
 func (a *App) Warnf(v ...interface{}) {
-	a.logging.Warnf(v...)
+	a.logger.Warnf(v...)
 }
 
 func (a *App) Errorf(v ...interface{}) {
-	a.logging.Errorf(v...)
+	a.logger.Errorf(v...)
 }
 
 func (a *App) Fatalf(v ...interface{}) {
-	a.logging.Fatalf(v...)
+	a.logger.Fatalf(v...)
 }
 
 func (a *App) Panicf(v ...interface{}) {
-	a.logging.Panicf(v...)
+	a.logger.Panicf(v...)
+}
+
+func (a *App) Start() error {
+	if a.webserver != nil {
+		a.webserver.Start()
+	}
+	return nil
 }

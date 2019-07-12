@@ -9,44 +9,63 @@ import (
 )
 
 type MyApp struct {
-	app.Webserver
+	//app.Webserver
+	app.App
+}
+
+type MyAppConfig struct {
+	app.App
+	Webserver app.WebserverConfig
+	//Profiling profiling.Config
 }
 
 func main() {
-	webserver := &MyApp{}
-	webserver.Init()
-
-	/*myApp, err := app.New(webserver)
-	if err != nil {
-		myApp.Panicf("failed to initialize webserver: %s", err)
-	}*/
-
 	router := gin.Default()
+
+	handler := &MyApp{}
+	handler.New(
+		app.Webserver(app.WebserverConfig{
+			IP:        "localhost",
+			Port:      8080,
+			TLSConfig: nil,
+			Handler:   router,
+		}),
+		app.Signal(handler.Stop, os.Interrupt, syscall.SIGTERM),
+		//app.Signal(handler.reload, syscall.SIGHUP),
+	)
+
 	// all requests require authentication using certificates
 	//router.Use(handler.AuthClientCertificate)
 	// Simple group: v1
-	v1 := router.Group("/v3")
+	v1 := router.Group("/v1")
 	{
-		v1.POST("/search/product", handler.ProductRequest)
+		v1.POST("/version", handler.version)
 	}
 
-	webserver.LoadWebserverConfig(app.WebserverConfig{
-		IP:        "localhost",
-		Port:      8080,
-		TLSConfig: nil,
-		Handler:   router,
-	})
-
-	webserver.Signal(func() {
-		webserver.Stop()
+	/*app.Signal(func() {
+		app.Stop()
 	}, os.Interrupt, syscall.SIGTERM)
 
-	webserver.Signal(func() {
-		webserver.Reload()
+	app.Signal(func() {
+		app.Reload()
 	}, syscall.SIGHUP)
+	*/
 
-	if err := webserver.Start(); err != nil {
-		webserver.Panicf("failed to start webserver: %s", err)
+	if err := handler.Start(); err != nil {
+		handler.Panicf("failed to start server: %s", err)
 	}
 
+}
+
+func (m *MyApp) stop() {
+	m.Stop()
+}
+
+/*
+func (m *MyApp) reload() {
+	m.Reload()
+}
+*/
+
+func (m *MyApp) version(c *gin.Context) {
 }

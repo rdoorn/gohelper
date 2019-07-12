@@ -4,11 +4,14 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rdoorn/gohelper/cmd"
 	"github.com/rdoorn/gohelper/logging"
+	"github.com/spf13/cobra"
 )
 
 type WebserverConfig struct {
@@ -23,6 +26,23 @@ type WebserverHandler struct {
 	config     *WebserverConfig
 	server     http.Server
 	serverDone chan struct{}
+}
+
+var ServerCmd = &cobra.Command{
+	Short:  "Server starts the webserver",
+	Use:    "server",
+	PreRun: Lock(),
+}
+
+func init() {
+	log.Println("init webserver")
+	ServerCmd.PersistentFlags().Bool("skip-tls-verify", false, "Foolishly accept TLS certificates signed by unkown certificate authorities")
+	ServerCmd.PersistentFlags().String("listener", "127.0.0.1", "Listening address")
+	ServerCmd.PersistentFlags().Int("port", 8080, "Listening port")
+	ServerCmd.MarkFlagRequired("listener")
+	ServerCmd.MarkFlagRequired("port")
+
+	cmd.Root.AddCommand(ServerCmd)
 }
 
 func NewWebserverHandler(logger logging.SimpleLogger, c WebserverConfig) *WebserverHandler {

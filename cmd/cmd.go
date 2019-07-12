@@ -1,7 +1,8 @@
-package app
+package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -13,40 +14,40 @@ import (
 
 var cfgFile string
 
-var RootCmd = &cobra.Command{}
+var Root = &cobra.Command{}
+var AppName = "app"
 
 func init() {
+	log.Println("init")
 	cobra.OnInitialize(initConfig)
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports Persistent Flags, which, if defined here,
 	// will be global for your application.
 
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file (default is $HOME/.hydra.yaml)")
-	RootCmd.PersistentFlags().Bool("skip-tls-verify", false, "Foolishly accept TLS certificates signed by unkown certificate authorities")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	Root.PersistentFlags().StringVar(&cfgFile, "config", "", fmt.Sprintf("Config file (default is $HOME/.%s.yaml)", AppName))
+	Root.PersistentFlags().String("pid", fmt.Sprintf("/var/run/%s.pid", AppName), fmt.Sprintf("Pid file (default is /var/run/%s.pid)", AppName))
+	Root.PersistentFlags().String("loglevel", "info", "Log Level (default: info)")
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+	log.Println("initconfig")
 	if cfgFile != "" {
 		// enable ability to specify config file via flag
 		viper.SetConfigFile(cfgFile)
 	} else {
 		path := absPathify("$HOME")
-		if _, err := os.Stat(filepath.Join(path, ".hydra.yml")); err != nil {
-			_, _ = os.Create(filepath.Join(path, ".hydra.yml"))
+		if _, err := os.Stat(filepath.Join(path, fmt.Sprintf(".%s.yml", AppName))); err != nil {
+			_, _ = os.Create(filepath.Join(path, fmt.Sprintf(".%s.yml", AppName)))
 		}
 
 		viper.SetConfigType("yaml")
-		viper.SetConfigName(".hydra") // name of config file (without extension)
-		viper.AddConfigPath("$HOME")  // adding home directory as first search path
+		viper.SetConfigName(fmt.Sprintf(".%s", AppName)) // name of config file (without extension)
+		viper.AddConfigPath("$HOME")                     // adding home directory as first search path
 	}
 
-	viper.SetDefault("LOG_LEVEL", "info")
+	//viper.SetDefault("LOG_LEVEL", "info")
 
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv() // read in environment variables that match

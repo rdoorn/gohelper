@@ -86,6 +86,16 @@ func (f *ZapSugar) Panicf(v ...interface{}) {
 	}
 }
 
+/*
+func (f *ZapSugar) Loglevel(level string) {
+	switch level {
+	case "debug":
+		f.Logger.With(zap.Le .Level(zap.DebugLevel)
+
+	}
+}
+*/
+
 func NewZap(dst ...string) (*ZapSugar, error) {
 	config := zap.NewProductionConfig()
 	if len(dst) == 0 {
@@ -101,6 +111,7 @@ func NewZap(dst ...string) (*ZapSugar, error) {
 	config.Level.SetLevel(zap.DebugLevel)
 	//cfg.Level = zap.DebugLevel
 	logger, err := config.Build()
+
 	return &ZapSugar{
 		Logger: logger.Sugar(),
 		sync:   logger.Sync,

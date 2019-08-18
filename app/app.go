@@ -1,31 +1,26 @@
 package app
 
 import (
-	"fmt"
-	"log"
-	"os"
-
-	"github.com/nightlyone/lockfile"
-	"github.com/rdoorn/gohelper/cmd"
 	"github.com/rdoorn/gohelper/logging"
 	"github.com/rdoorn/gohelper/profiling"
 	"github.com/rdoorn/gohelper/signaling"
-	"github.com/spf13/cobra"
 )
 
+/*
 type WebserverInterface interface {
 	Start() error
 	Stop() error
 }
+*/
 
 type App struct {
-	Name      string
-	logger    logging.SimpleLogger
-	profiler  profiling.Interface
-	webserver *WebserverHandler
-	signals   *signaling.Handler
+	//Name     string
+	logger   logging.SimpleLogger
+	profiler profiling.Interface
+	signals  *signaling.Handler
 }
 
+/*
 func (app *App) New(opts ...Option) error {
 	logger, _ := logging.NewZap("stdout")
 
@@ -41,6 +36,7 @@ func (app *App) New(opts ...Option) error {
 
 	return nil
 }
+*/
 
 func (a *App) Println(v ...interface{}) {
 	a.logger.Println(v...)
@@ -70,6 +66,7 @@ func (a *App) Panicf(v ...interface{}) {
 	a.logger.Panicf(v...)
 }
 
+/*
 func (a *App) Start() error {
 	a.logger.Infof("application starting")
 	if a.webserver != nil {
@@ -90,12 +87,16 @@ func (a *App) Stop() {
 func init() {
 	cmd.Root.AddCommand(versionCmd)
 }
+*/
 
+/*
 func Execute() error {
 
 	return cmd.Root.Execute()
 }
+*/
 
+/*
 func Lock() func(cmd *cobra.Command, args []string) {
 	return func(cobra *cobra.Command, args []string) {
 		pidfile := cmd.MustGetString(cobra, "pid")
@@ -118,3 +119,4 @@ var versionCmd = &cobra.Command{
 		fmt.Println("Hugo Static Site Generator v0.9 -- HEAD")
 	},
 }
+*/

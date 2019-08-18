@@ -22,6 +22,7 @@ func WithProfiling(p profiling.Interface) Option {
 	}
 }
 
+/*
 func Webserver(c WebserverConfig) Option {
 	return func(o *App) {
 		if o.webserver == nil {
@@ -29,6 +30,7 @@ func Webserver(c WebserverConfig) Option {
 		}
 	}
 }
+*/
 
 func Signal(f func(), sigs ...os.Signal) Option {
 	return func(o *App) {
@@ -38,6 +40,25 @@ func Signal(f func(), sigs ...os.Signal) Option {
 
 		o.signals.Add(f, sigs...)
 	}
+}
+
+func (a *App) WithLogging(l logging.SimpleLogger) *App {
+	a.logger = l
+	return a
+}
+
+func (a *App) WithProfiling(p profiling.Interface) *App {
+	a.profiler = p
+	return a
+}
+
+func (a *App) Signal(f func(), sigs ...os.Signal) *App {
+	if a.signals == nil {
+		a.signals = signaling.New()
+	}
+
+	a.signals.Add(f, sigs...)
+	return a
 }
 
 /*

@@ -1,19 +1,6 @@
 package app
 
-import (
-	"context"
-	"crypto/tls"
-	"fmt"
-	"log"
-	"net/http"
-	"time"
-
-	"github.com/gin-gonic/gin"
-	"github.com/rdoorn/gohelper/cmd"
-	"github.com/rdoorn/gohelper/logging"
-	"github.com/spf13/cobra"
-)
-
+/*
 type WebserverConfig struct {
 	IP        string
 	Port      int
@@ -121,6 +108,7 @@ func (a *App) GinLogger() gin.HandlerFunc {
 
 	}
 }
+*/
 
 /*
 func (w *WebserverHandler) LoadWebserverConfig(config WebserverConfig) error {

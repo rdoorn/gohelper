@@ -39,5 +39,5 @@ func ToLevel(l string) (Level, error) {
 	if level, ok := StringToLevel[l]; ok {
 		return level, nil
 	}
-	return InfoLevel, fmt.Errorf("unkown log level")
+	return InfoLevel, fmt.Errorf("unkown log level '%s'", l)
 }

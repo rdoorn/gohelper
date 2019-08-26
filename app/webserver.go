@@ -1,17 +1,6 @@
 package app
 
-import (
-	"context"
-	"crypto/tls"
-	"fmt"
-	"net/http"
-	"os"
-	"time"
-
-	"github.com/rdoorn/gohelper/logging"
-	"github.com/rdoorn/gohelper/signaling"
-)
-
+/*
 type WebserverConfig struct {
 	IP        string
 	Port      int
@@ -19,41 +8,59 @@ type WebserverConfig struct {
 	TLSConfig *tls.Config
 }
 
-type Webserver struct {
-	App
-	Config     *WebserverConfig
+type WebserverHandler struct {
+	logging    logging.SimpleLogger
+	config     *WebserverConfig
 	server     http.Server
 	serverDone chan struct{}
-	signal     *signaling.Handler
 }
 
-func (w *Webserver) Start() error {
-	if w.logging == nil {
-		panic("webserver not initialized")
+var ServerCmd = &cobra.Command{
+	Short:  "Server starts the webserver",
+	Use:    "server",
+	PreRun: Lock(),
+}
+
+func init() {
+	log.Println("init webserver")
+	ServerCmd.PersistentFlags().Bool("skip-tls-verify", false, "Foolishly accept TLS certificates signed by unkown certificate authorities")
+	ServerCmd.PersistentFlags().String("listener", "127.0.0.1", "Listening address")
+	ServerCmd.PersistentFlags().Int("port", 8080, "Listening port")
+	ServerCmd.MarkFlagRequired("listener")
+	ServerCmd.MarkFlagRequired("port")
+
+	cmd.Root.AddCommand(ServerCmd)
+}
+
+func NewWebserverHandler(logger logging.SimpleLogger, c WebserverConfig) *WebserverHandler {
+	return &WebserverHandler{
+		logging:    logger, // inherrit logger
+		config:     &c,
+		serverDone: make(chan struct{}),
 	}
-	w.logging.Println("Server starting")
+}
+
+func (w *WebserverHandler) Start() error {
 	// router.POST("/opvragen/naw", handler.ClientRequest)
 	// router.POST("/1bnr", handler.IbanRequest)
 
-	listenAddr := fmt.Sprintf("%s:%d", w.Config.IP, w.Config.Port)
+	listenAddr := fmt.Sprintf("%s:%d", w.config.IP, w.config.Port)
 	// start https server
 	w.server = http.Server{
 		Addr:      listenAddr,
-		Handler:   w.Config.Handler,
-		TLSConfig: w.Config.TLSConfig,
+		Handler:   w.config.Handler,
+		TLSConfig: w.config.TLSConfig,
 	}
 
-	w.logging.Println("Server is ready to handle requests", "addr", listenAddr)
+	w.logging.Infof("Webservice listening", "addr", listenAddr)
 	if err := w.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		w.logging.Fatalf("Could not start listener", "addr", listenAddr, "error", err)
 		return err
 	}
 	<-w.serverDone
 	return nil
 }
 
-func (w *Webserver) Stop() error {
-	w.logging.Println("Server is shutting down...")
+func (w *WebserverHandler) Stop() error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -63,27 +70,54 @@ func (w *Webserver) Stop() error {
 		w.logging.Fatalf("Could not gracefully shutdown the server: %v\n", err)
 	}
 	close(w.serverDone)
-	w.signal.Close()
+	w.logging.Infof("Webservice shutdown")
 
 	return nil
 }
 
-func (w *Webserver) Init() (err error) {
-	w.serverDone = make(chan struct{})
-	w.logging, err = logging.NewZap("stdout")
-	w.signal = signaling.New()
-	return
-}
-
-func (w *Webserver) Reload() error {
+func (w *WebserverHandler) Reload() error {
 	return nil
 }
 
-func (w *Webserver) LoadWebserverConfig(config WebserverConfig) error {
+func (a *App) GinLogger() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Start timer
+		start := time.Now()
+		path := c.Request.URL.Path
+		raw := c.Request.URL.RawQuery
+
+		// Process request
+		c.Next()
+
+		end := time.Now()
+		if raw != "" {
+			path = path + "?" + raw
+		}
+
+		a.Infof(
+			//path,
+			c.Request.Host,
+			"client", c.ClientIP(),
+			"method", c.Request.Method,
+			"path", path,
+			"status", c.Writer.Status(),
+			"latency", end.Sub(start),
+			"size", c.Writer.Size(),
+			"error", c.Errors.ByType(gin.ErrorTypePrivate).String(),
+		)
+
+	}
+}
+*/
+
+/*
+func (w *WebserverHandler) LoadWebserverConfig(config WebserverConfig) error {
 	w.Config = &config
 	return nil
 }
-
-func (w *Webserver) Signal(f func(), sig ...os.Signal) {
+*/
+/*
+func (w *WebserverHandler) Signal(f func(), sig ...os.Signal) {
 	w.signal.Add(f, sig...)
 }
+*/

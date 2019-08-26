@@ -1,9 +1,9 @@
 package jwthelper
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -18,8 +18,8 @@ type Credentials struct {
 
 var (
 	// JWTTokenSigningKey is key used to sign jtw tokens
-	//JWTTokenSigningKey = rndKey()
-	JWTTokenSigningKey = []byte("FT9#b=CLWjNE37iCJaWWzZRqMBhnRk&yhzAJ7FfM)d?UzyGoZW2RCwBG2w;o@bMEPfoq(VGTW8ory#KABxJjURNa3@dA?gnzWQmoWZTz3.A}DEfJVMqE?DFKtK87Yo2r")
+	JWTTokenSigningKey = rndKey(32)
+	// JWTTokenSigningKey set static for testing, but should be random..
 	// JWTTokenDuration is how long the jwt token is valid
 	JWTTokenDuration = 1 * time.Hour
 )
@@ -31,6 +31,12 @@ var (
 	ErrTokenInvalidSigningMethod = errors.New("Token has an invalid signing method")
 	ErrTokenConversionError      = errors.New("Token conversion error")
 )
+
+func rndKey(i int) []byte {
+	token := make([]byte, i)
+	rand.Read(token)
+	return token
+}
 
 // Sign turns users credentials in to a JWT token string
 func Sign(i interface{}) (string, error) {
@@ -76,7 +82,7 @@ func Validate(tokenStr string, i interface{}) error {
 	// validate clain
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		if time.Now().Unix() > int64(claims["ex"].(float64)) {
-			return fmt.Errorf("Token expired")
+			return ErrTokenExpired
 		}
 
 		// convert claim to the requested interface

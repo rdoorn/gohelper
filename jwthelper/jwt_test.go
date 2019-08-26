@@ -19,6 +19,8 @@ type Token struct {
 }
 
 func TestJWT(t *testing.T) {
+	JWTTokenSigningKey = []byte("FT9#b=CLWjNE37iCJaWWzZRqMBhnRk&yhzAJ7FfM)d?UzyGoZW2RCwBG2w;o@bMEPfoq(VGTW8ory#KABxJjURNa3@dA?gnzWQmoWZTz3.A}DEfJVMqE?DFKtK87Yo2r")
+
 	token := &Token{
 		Credentials: &Credentials{
 			Id:     "user1",
@@ -43,12 +45,14 @@ func TestJWT(t *testing.T) {
 }
 
 func TestJWTExpired(t *testing.T) {
+	JWTTokenSigningKey = []byte("FT9#b=CLWjNE37iCJaWWzZRqMBhnRk&yhzAJ7FfM)d?UzyGoZW2RCwBG2w;o@bMEPfoq(VGTW8ory#KABxJjURNa3@dA?gnzWQmoWZTz3.A}DEfJVMqE?DFKtK87Yo2r")
 	token := &Token{}
 	err := Validate(expiredToken, token)
 	assert.Equal(t, ErrTokenExpired, err)
 }
 
 func TestJWTInvalid(t *testing.T) {
+	JWTTokenSigningKey = []byte("FT9#b=CLWjNE37iCJaWWzZRqMBhnRk&yhzAJ7FfM)d?UzyGoZW2RCwBG2w;o@bMEPfoq(VGTW8ory#KABxJjURNa3@dA?gnzWQmoWZTz3.A}DEfJVMqE?DFKtK87Yo2r")
 	token := &Token{}
 	err := Validate(invalidToken, token)
 	assert.Equal(t, ErrTokenInvalidData, err)

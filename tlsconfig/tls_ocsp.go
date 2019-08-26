@@ -9,19 +9,16 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/schubergphilis/mercury/pkg/logging"
-
 	"golang.org/x/crypto/ocsp"
 )
 
 // OCSPHandler refreshes OCSP staple if expired or not present
 func OCSPHandler(c *tls.Config, quit chan bool) {
-	log := logging.For("tlsconfig/ocsp/handler").WithField("server", c.ServerName)
 	expiry, err := RenewOCSP(c)
 	if err != nil {
-		log.WithField("renew", fmt.Sprintf("%s", expiry)).WithError(err).Warn("Initial OCSP get failed")
+		//log.WithField("renew", fmt.Sprintf("%s", expiry)).WithError(err).Warn("Initial OCSP get failed")
 	} else {
-		log.WithField("renew", fmt.Sprintf("%s", expiry)).Info("Initial OCSP get succesfull")
+		//log.WithField("renew", fmt.Sprintf("%s", expiry)).Info("Initial OCSP get succesfull")
 	}
 
 	ticker := time.NewTicker(expiry.Sub(time.Now()))
@@ -30,9 +27,9 @@ func OCSPHandler(c *tls.Config, quit chan bool) {
 		case <-ticker.C:
 			expiry, err := RenewOCSP(c)
 			if err != nil {
-				log.WithField("renew", fmt.Sprintf("%s", expiry)).WithError(err).Warn("OCSP renewal failed")
+				//log.WithField("renew", fmt.Sprintf("%s", expiry)).WithError(err).Warn("OCSP renewal failed")
 			} else {
-				log.WithField("renew", fmt.Sprintf("%s", expiry)).Info("OCSP renewal succesfull")
+				//log.WithField("renew", fmt.Sprintf("%s", expiry)).Info("OCSP renewal succesfull")
 			}
 			ticker = time.NewTicker(expiry.Sub(time.Now()))
 		case <-quit:

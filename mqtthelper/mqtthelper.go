@@ -8,13 +8,14 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
-func Connect(clientId string, urlStr string) (mqtt.Client, error) {
+func Connect(clientId string, urlStr string, onconnect func(c mqtt.Client)) (mqtt.Client, error) {
 	uri, err := url.Parse(urlStr)
 	if err != nil {
 		return nil, err
 	}
 
 	opts := createClientOptions(clientId, uri)
+	opts.OnConnect = onconnect
 	client := mqtt.NewClient(opts)
 	token := client.Connect()
 	for !token.WaitTimeout(3 * time.Second) {

@@ -34,18 +34,26 @@ func (h *Handler) Publish(topic string, qos byte, retained bool, payload interfa
 	return nil
 }
 
-func (h *Handler) Subscribe(topic string, qos byte, handler mqtt.MessageHandler) error {
+func (h *Handler) Subscribe(topic string, qos byte, messageHandler func(client mqtt.Client, msg mqtt.Message)) error {
+
+	s := func(c mqtt.Client) {
+		if token := c.Subscribe(topic, qos, messageHandler); token.Wait() && token.Error() != nil {
+			panic(token.Error())
+		}
+	}
+
 	if h.sub == nil {
-		c, err := newclient("sub", nil)
+		c, err := newclient("sub", s)
 		if err != nil {
 			return err
 		}
 		h.sub = &c
 	}
-
-	if token := (*h.sub).Subscribe(topic, qos, handler); token.Wait() && token.Error() != nil {
-		return token.Error()
-	}
+	/*
+		if token := (*h.sub).Subscribe(topic, qos, messageHandler); token.Wait() && token.Error() != nil {
+			return token.Error()
+		}
+	*/
 	return nil
 }
 

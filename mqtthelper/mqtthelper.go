@@ -19,10 +19,10 @@ func New() *Handler {
 	return &Handler{}
 }
 
-func (h *Handler) Publish(topic string, qos byte, retained bool, payload interface{}) error {
+func (h *Handler) Publish(clientID, topic string, qos byte, retained bool, payload interface{}) error {
 	if h.pub == nil {
 		log.Printf("mqtt: connecting to pub")
-		c, err := newclient("pub", nil)
+		c, err := newclient(fmt.Sprintf("%s_pub", clientID), nil)
 		if err != nil {
 			return err
 		}
@@ -36,7 +36,7 @@ func (h *Handler) Publish(topic string, qos byte, retained bool, payload interfa
 	return nil
 }
 
-func (h *Handler) Subscribe(topic string, qos byte, messageHandler func(client mqtt.Client, msg mqtt.Message)) error {
+func (h *Handler) Subscribe(clientID, topic string, qos byte, messageHandler func(client mqtt.Client, msg mqtt.Message)) error {
 
 	s := func(c mqtt.Client) {
 		log.Printf("mqtt: subscribing to %s", topic)
@@ -47,7 +47,7 @@ func (h *Handler) Subscribe(topic string, qos byte, messageHandler func(client m
 
 	if h.sub == nil {
 		log.Printf("mqtt: connecting to sub")
-		c, err := newclient("sub", s)
+		c, err := newclient(fmt.Sprintf("%s_sub", clientID), s)
 		if err != nil {
 			return err
 		}

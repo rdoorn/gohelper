@@ -21,6 +21,7 @@ func New() *Handler {
 
 func (h *Handler) Publish(topic string, qos byte, retained bool, payload interface{}) error {
 	if h.pub == nil {
+		log.Printf("mqtt: connecting to pub")
 		c, err := newclient("pub", nil)
 		if err != nil {
 			return err
@@ -28,6 +29,7 @@ func (h *Handler) Publish(topic string, qos byte, retained bool, payload interfa
 		h.pub = &c
 	}
 
+	log.Printf("mqtt: publishing to %s: %v", topic, payload)
 	if token := (*h.pub).Publish(topic, qos, retained, payload); token.Wait() && token.Error() != nil {
 		return token.Error()
 	}
@@ -37,12 +39,14 @@ func (h *Handler) Publish(topic string, qos byte, retained bool, payload interfa
 func (h *Handler) Subscribe(topic string, qos byte, messageHandler func(client mqtt.Client, msg mqtt.Message)) error {
 
 	s := func(c mqtt.Client) {
+		log.Printf("mqtt: subscribing to %s", topic)
 		if token := c.Subscribe(topic, qos, messageHandler); token.Wait() && token.Error() != nil {
 			panic(token.Error())
 		}
 	}
 
 	if h.sub == nil {
+		log.Printf("mqtt: connecting to sub")
 		c, err := newclient("sub", s)
 		if err != nil {
 			return err

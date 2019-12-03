@@ -2,11 +2,82 @@ package mqtthelper
 
 import (
 	"fmt"
+	"log"
 	"net/url"
+	"os"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
+
+type Handler struct {
+	pub *mqtt.Client
+	sub *mqtt.Client
+}
+
+func New() *Handler {
+	return &Handler{}
+}
+
+func (h *Handler) Publish(topic string, qos byte, retained bool, payload interface{}) error {
+	if h.pub == nil {
+		c, err := newclient("pub", nil)
+		if err != nil {
+			return err
+		}
+		h.pub = &c
+	}
+
+	if token := (*h.pub).Publish(topic, qos, retained, payload); token.Wait() && token.Error() != nil {
+		return token.Error()
+	}
+	return nil
+}
+
+func (h *Handler) Subscribe(topic string, qos byte, handler mqtt.MessageHandler) error {
+	if h.sub == nil {
+		c, err := newclient("sub", nil)
+		if err != nil {
+			return err
+		}
+		h.sub = &c
+	}
+
+	if token := (*h.sub).Subscribe(topic, qos, handler); token.Wait() && token.Error() != nil {
+		return token.Error()
+	}
+	return nil
+}
+
+func newclient(clientID string, onConnect func(c mqtt.Client)) (mqtt.Client, error) {
+	urlStr := getURL()
+
+	uri, err := url.Parse(urlStr)
+	if err != nil {
+		return nil, err
+	}
+
+	opts := createClientOptions(clientID, uri)
+	opts.OnConnect = onConnect
+	client := mqtt.NewClient(opts)
+	token := client.Connect()
+	for !token.WaitTimeout(3 * time.Second) {
+	}
+	if err := token.Error(); err != nil {
+		return nil, err
+	}
+	return client, nil
+}
+
+func getURL() string {
+	mqttURL, ok := os.LookupEnv("MQTT_URL")
+	if !ok {
+		panic("missing environment key: MQTT_URL")
+	}
+
+	log.Printf("MQTT_URL: %s", mqttURL)
+	return mqttURL
+}
 
 func Connect(clientId string, urlStr string, onconnect func(c mqtt.Client)) (mqtt.Client, error) {
 	uri, err := url.Parse(urlStr)

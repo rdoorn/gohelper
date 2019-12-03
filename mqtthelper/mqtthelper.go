@@ -40,7 +40,7 @@ func (h *Handler) Subscribe(topic string, qos byte, messageHandler func(client m
 
 	s := func(c mqtt.Client) {
 		log.Printf("mqtt: subscribing to %s", topic)
-		if token := c.Subscribe(topic, qos, messageHandler); token.Wait() && token.Error() != nil {
+		if token := c.Subscribe(topic, qos, messageHandler); token.WaitTimeout(3*time.Second) && token.Error() != nil {
 			panic(token.Error())
 		}
 	}

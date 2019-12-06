@@ -61,6 +61,19 @@ func (h *Handler) Subscribe(clientID, topic string, qos byte, messageHandler fun
 	return nil
 }
 
+func (h *Handler) SubscribeWithOnConnect(clientID string, onConnect func(c mqtt.Client)) error {
+
+	if h.sub == nil {
+		log.Printf("mqtt: connecting to sub")
+		c, err := newclient(fmt.Sprintf("%s_sub", clientID), onConnect)
+		if err != nil {
+			return err
+		}
+		h.sub = &c
+	}
+	return nil
+}
+
 func newclient(clientID string, onConnect func(c mqtt.Client)) (mqtt.Client, error) {
 	urlStr := getURL()
 
